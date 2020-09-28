@@ -8,10 +8,7 @@ from sklearn.model_selection import train_test_split, StratifiedKFold
 from tabulate import tabulate
 from torch_geometric.datasets import Planetoid, CitationFull, Coauthor, Amazon
 import matplotlib.pyplot as plt
-
-import seaborn as sns
 import itertools, pickle
-from scipy import stats
 
 if not sys.warnoptions:
     warnings.simplefilter("ignore")

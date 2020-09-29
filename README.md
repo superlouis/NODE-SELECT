@@ -29,10 +29,22 @@ pip install tabulate
 
 <a name="usage"></a>
 ## Usage
-Once all the aforementionned requirements are satisfied, one can easily our codes using [the appropriate flags](./miscellaneous.txt). A set of the best hyper-parameters is provided [in this file](./NODE-SELECT_Configurations.pdf).
+Once all the aforementionned requirements are satisfied, one can easily our codes using [the appropriate flags](./miscellaneous.txt). A set of the best hyper-parameters is provided [in this file](./NODE-SELECT_Configurations.pdf), please refer to it.
 
-- Example-1. Train & evaluate a NODE-SELECT model of  on the bulk-modulus property using the CGCNN dataset.
+- Example-1. Train & evaluate a NODE-SELECT (NSGNN) model on the Pubmed dataset: with a learning-rate of 0.01, weight-decay of 0.0005, and built with 5 layers (filters).
+
 ```bash
-python train.py --property bulk-modulus --data_src CGCNN
+python main.py --benchmark pubmed --framework NSGNN --lr 0.01 --weight_decay 0.0005  --layers 5
 ```
 
+- Example-2. Train & evaluate a GCN model on the Cora dataset: with a learning-rate of 0.01, weight-decay of 0.0005, and built with 2 layers.
+
+```bash
+python main.py --benchmark cora --framework GCN --lr 0.01 --weight_decay 0.0005  --layers 2
+```
+
+- Example-3. Train & evaluate a GAT model on the Amazon-Photos dataset: with a learning-rate of 0.005, weight-decay of 0.00005, 128 neurons (16 neurons\*8heads), built with 2 layers, and 8 attention-heads.
+
+```bash
+python main.py --benchmark amazon-p --framework GAT --lr 0.005 --weight_decay 0.00005  --layers 2 --heads 8 --neurons 16
+```

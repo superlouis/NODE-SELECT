@@ -29,5 +29,10 @@ pip install tabulate
 
 <a name="usage"></a>
 ## Usage
-Once all the aforementionned requirements are satisfied, one can easily our codes using [the appropriate flags](./miscallaneous.txt). A set of the best hyper-parameters is provided [in this file](./NODE-SELECT_Configurations.pdf)
+Once all the aforementionned requirements are satisfied, one can easily our codes using [the appropriate flags](./miscallaneous.txt). A set of the best hyper-parameters is provided [in this file](./NODE-SELECT_Configurations.pdf).
+
+- Example-1. Train & evaluate a NODE-SELECT model of  on the bulk-modulus property using the CGCNN dataset.
+```bash
+python train.py --property bulk-modulus --data_src CGCNN
+```
 

@@ -24,6 +24,7 @@ Flags
 --depth        : propagation depth of NSGNN filter ***only needed for NODE-SELECT (default:1)
 --random       : whether to randomize the seeds used for training/testing the model (default:False)
 
+
 Best Hyperparameter Configurations
 ==================================
 see NODE-SELECT_Configurations.pdf

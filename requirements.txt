@@ -1,8 +1,0 @@
-numpy
-torch
-torch_geometric
-pandas
-scikit-learn
-tabulate
-matplotlib
-

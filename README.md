@@ -29,5 +29,5 @@ pip install tabulate
 
 <a name="usage"></a>
 ## Usage
-Once all the aforementionned requirements are satisfied, one can easily our codes using [the appropriate flags](../miscallaneous.md)
+Once all the aforementionned requirements are satisfied, one can easily our codes using [the appropriate flags](./miscallaneous.txt). A set of the best hyper-parameters is provided [in this file](./NODE-SELECT_Configurations.pdf)
 

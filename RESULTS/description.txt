@@ -1,0 +1,1 @@
+Folder where training results can be stored as pickle file.

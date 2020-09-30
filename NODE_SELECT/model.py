@@ -1,8 +1,8 @@
 from .baseline import *
 
-class WAVE_LAYER(MessagePassing):
+class NODE_FILTER(MessagePassing):
     def __init__(self, feat_in, feat_out, spread=2, prob_to_lead = 0.4):
-        super(WAVE_LAYER, self).__init__(aggr='mean',flow='target_to_source')
+        super(NODE_FILTER, self).__init__(aggr='mean',flow='target_to_source')
         self.spread       = spread
         self.threshold    = prob_to_lead
 
@@ -83,7 +83,7 @@ class NSGNN(torch.nn.Module):
         self.p2L           = p2L
         self.spread        = spread_L
         self.neg_slope     = neg_slope
-        self.W_layers      = nn.ModuleList([WAVE_LAYER(feat_in,feat_out,prob_to_lead=self.p2L, spread=self.spread) for i in range(learners)])
+        self.W_layers      = nn.ModuleList([NODE_FILTER(feat_in,feat_out,prob_to_lead=self.p2L, spread=self.spread) for i in range(learners)])
         
         self.fusing_weight = unifying_weight
         if unifying_weight : self.prob_weighter = Linear(self.N_learners,feat_out, bias=False)

@@ -92,15 +92,11 @@ class NSGNN(torch.nn.Module):
     def forward(self,data):
         # INITIALIZATION
         x, edge_index        = data.x,  data.edge_index
-        L_containers         = torch.tensor([]).cuda()
+        L_containers         = [None]*self.N_learners
+        filter_output        = [None]*self.N_learners
+        filter_vstar         = [None]*self.N_learners
 
         X_out                = torch.zeros(x.size(0),self.dim_out).cuda()
-        adj_prob             = torch.randn(x.size(0),2).cuda()
-        agreement_tensor     = torch.zeros(x.size(0),1).cuda()
-        lead_pct_tensor      = []
-
-        temp_thing           = torch.tensor([]).cuda()
-
 
         # CONVOLUTION-PER-LEARNER
         for i in range(self.N_learners):
@@ -108,11 +104,16 @@ class NSGNN(torch.nn.Module):
             x_temp           = F.leaky_relu(x_temp,self.neg_slope)
             x_temp           = F.dropout(x_temp,p=0.4, training=self.training)
             X_out            = X_out + x_temp
-            temp_thing       = torch.cat([temp_thing,F.softmax(x_temp.unsqueeze(0),dim=-1)],dim=0)
-            L_containers     = torch.cat([L_containers,self.W_layers[i].L_flag.unsqueeze(0)],dim=0)
-            lead_pct_tensor.append(self.W_layers[i].L_flag.sum()/x.size(0))
 
-        self.outputs   = temp_thing
+            filter_output[i] = F.softmax(x_temp.unsqueeze(0),dim=-1)
+            filter_vstar[i]  = (self.W_layers[i].L_flag.sum()/x.size(0)).item()
+            L_containers[i]  = self.W_layers[i].L_flag.unsqueeze(0)
+
+        # RE-ARRANGING INFORMATION
+        self.outputs       = torch.cat(filter_output,dim=0)
+        self.leader_info   = np.round_(filter_vstar,2)
+        L_containers       = torch.cat(L_containers,dim=0)
+
         # FEATURE-SUMMATION 
         if self.fusing_weight:
             P_out          = torch.transpose(L_containers,0,1).squeeze(-1)
@@ -125,8 +126,5 @@ class NSGNN(torch.nn.Module):
         y                  = X_out+global_weight        
         y                  = F.log_softmax(y,dim=-1)
         y                  = y.squeeze()
-
-        lead_pct_tensor    = torch.tensor(lead_pct_tensor)
-        self.leader_info   = np.round_(lead_pct_tensor.cpu().tolist(),2)
         return y
 

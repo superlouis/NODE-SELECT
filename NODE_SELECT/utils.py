@@ -19,33 +19,6 @@ def set_up_model(framework):
     reference       = dict(zip(model_name,model_reference))
     return reference[framework]
 
-
-@torch.no_grad()
-def MICS(feat_out, r, final_embedding, true_label):
-    simil = torch.nn.CosineSimilarity(dim=-1)
-    arr   = list(range(feat_out))
-    comb  = list(itertools.combinations(arr,r))
-    total = [1]*len(comb)
-    count = 0
-
-    # iterate over each class-combination
-    for c in comb:
-        idx_0 = (true_label==c[0]).nonzero().view(-1)
-        idx_1 = (true_label==c[1]).nonzero().view(-1)
-        if len(idx_0)>0 and len(idx_1)>0:
-            A     = F.softmax(final_embedding[idx_0],dim=-1)
-            B     = F.softmax(final_embedding[idx_1],dim=-1)
-
-            num   = A.size(0)*B.size(0)
-            temp  = torch.cat([simil(A[i],B) for i in range(len(A))],dim=0)
-            total[count] = temp.mean()
-        else:
-            total[count] = 1     
-        count       +=1
-
-    total = torch.tensor(total).float()
-    return total.mean().item()
-
 def load_metrics(name=''):
     saved_metrics = pickle.load(open(f'RESULTS/metrics_{name}.pickle', "rb", -1))
     return saved_metrics
@@ -166,4 +139,48 @@ def torch_accuracy(tensor_pred,tensor_real):
     correct = torch.eq(tensor_pred,tensor_real).sum().float().item()
     return 100*correct/len(tensor_real)
 
+def mess_up_dataset(dataset, num_noise):
+    dataset       = dataset.to('cpu')
+    actual_labels = torch.unique(dataset.y)
+    actual_nodes  = np.arange(dataset.x.size(0)).reshape(-1,1)
+
+    real_flags    = np.ones(dataset.x.size(0))
+    fake_flags    = np.zeros(num_noise)
+    flags         = np.hstack([real_flags,fake_flags])
+
+    np.random.seed(num_noise)
+    torch.manual_seed(num_noise)
+
+    print('> Number of fake data: ',num_noise)
+
+    fake_nodes    = np.arange(dataset.x.size(0),dataset.x.size(0)+num_noise)
+    size_feat     = dataset.x.size(1)
+    avg_connect   = int(dataset.edge_index.size(1)/dataset.x.size(0))
+    # fake data
+    fake_labels   = torch.tensor(np.random.choice(actual_labels,num_noise).reshape(-1))
+    fake_feature  = torch.randn(num_noise,size_feat)
+
+    # making fake edges
+    real2fake     = np.random.choice(fake_nodes,size=(dataset.x.size(0),avg_connect)).reshape(-1)
+    fake2real     = np.repeat(actual_nodes,avg_connect,axis=-1).reshape(-1)
+
+    np_edge_index = dataset.edge_index.numpy()
+
+    temp_TOP      = np.hstack((np_edge_index[0],fake2real))
+    idx_sorting   = np.argsort(temp_TOP)
+    TOP           = np.sort(temp_TOP)
+    temp_bottom   = np.hstack([np_edge_index[1],real2fake])
+    BOTTOM        = temp_bottom[idx_sorting]
+
+    REAL_add      = np.vstack([TOP,BOTTOM])
+    FAKE_add      = np.vstack([real2fake,fake2real])
+    
+    # all-together
+    dataset.edge_index = torch.tensor(np.hstack([REAL_add,FAKE_add]))
+    dataset.x          = torch.cat([dataset.x,fake_feature],dim=0)
+    dataset.y          = torch.cat([dataset.y,fake_labels],dim=-1)
+    dataset.flags      = torch.tensor(flags)
+
+    return dataset
+ 
 

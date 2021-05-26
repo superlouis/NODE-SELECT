@@ -6,33 +6,51 @@ from NODE_SELECT.data  import *
 # ARGS PARAMETERS
 parser = argparse.ArgumentParser(description='NODE-SELECT Graph Neural Network')
 
+# the dataset to use
 parser.add_argument('--benchmark', default='cora',
                     choices=['cora','citeseer','cora-f','pubmed','coauthor-p','coauthor-c','amazon-p','amazon-c'],
                     help='benchmark dataset (default: cora')
-parser.add_argument('--framework', default='NSGNN',choices=['NSGNN','GCN','GAT','GRAPHSAGE','MLP'],
+
+# the GNN framework
+parser.add_argument('--framework', default='NSGNN',choices=['NSGNN','GCN','GAT','GRAPHSAGE','MLP','GRAPHConv','DNA'],
                     help='model choices (default: NSGNN)')
+
+# Learning Hyper-parameters
+parser.add_argument('--lr',default=1e-2, type=float, help='learning rate')
+parser.add_argument('--weight_decay',default=5e-4, type=float, help='weight decay to use for Adam optmizer')
+
+# Model Parameters 
 parser.add_argument('--layers', default =1, type=int,
                     help='number of layers needed to construct your model (default:1)')
 parser.add_argument('--neurons',default=64, type=int,
                     help='number of neurons to use for hidden layers of your model. ***not needed for NSGNN')
-parser.add_argument('--lr',default=1e-2, type=float, help='learning rate')
+parser.add_argument('--heads',  default=8, type=int, help='number of attention-heads to use  for GAT   ***only needed for GAT')
+parser.add_argument('--depth',  default=1, type=int, help='propagation depth of NSGNN filter for NSGNN ***only needed for NODE-SELECT')
+parser.add_argument('--groups', default=1, type=int, help ='groupings of linear projection   for DNA   ***only needed for DNA'  )
+
+# Performance Parameters
 parser.add_argument('--num_splits',default=10, type=int,
                     help='number of different data-splits to use for training and testing model')
-parser.add_argument('--weight_decay',default=5e-4, type=float, help='weight decay to use for Adam optmizer')
-parser.add_argument('--heads', default=8, type=int, help='number of attention-heads to use for GAT ***only needed for GAT')
-parser.add_argument('--depth', default=1, type=int, help='propagation depth of NSGNN filter ***only needed for NODE-SELECT')
-parser.add_argument('--random', default=False, type=bool, help='whether to randomize the seeds used for training/testing the model')
+parser.add_argument('--random', default=False, type=bool,  help ='whether to randomize the seeds used for training/testing the model')
+parser.add_argument('--noise',  default=0.1,   type=float, help ='percentage of noise to add to dataset')
+
+
 args = parser.parse_args(sys.argv[1:])
 
-
 # GPU-SETTING & TRAINING SETTINGS
-device        = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+device        = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 loop_run      = args.num_splits
 
 # DATA PARAMETERS
 name_dataset  = args.benchmark
 dataset       = import_dataset(name_dataset)
 data          = dataset[0].to(device)
+
+noise_pct     = args.noise
+noise2add     = int(data.x.size(0)*noise_pct)
+
+if noise2add >0:
+    data      = mess_up_dataset(data, noise2add).to(device)
 
 feat_in       = data.x.size(1)
 feat_mid      = args.neurons
@@ -46,10 +64,11 @@ n_epoch            = 200
 lr_rate            = args.lr
 weight_decay       = args.weight_decay
 n_layers           = args.layers
-all_acc            = []
-all_MICS           = []
+
+all_ACC            = []
+all_MEMORY         = []
 all_TIME           = []
-all_seeds          = []
+all_SEEDS          = []
 
 if args.random:
     the_seeds      = np.random.randint(50000,size=(loop_run,)) 
@@ -115,6 +134,10 @@ for i in range(loop_run):
             output_training(metrics,epoch,estop_val,extra=extra)
             live_plot(epoch, metrics.training_loss1, metrics.valid_loss1, watch=True,interval=0.05)
 
+        if epoch == n_epoch-1:
+            mem_size = torch.cuda.max_memory_reserved(device)*1e-9
+            all_MEMORY.append(mem_size)            
+
     # TESTING PHASE
     model.eval()
     outpred    = model(data)
@@ -122,7 +145,6 @@ for i in range(loop_run):
     test_real  = data.y[data.test_mask] 
     test_pred  = pred[data.test_mask]  
     acc        = metrics.evaluation_results(test_pred,test_real)
-    mics       = MICS(feat_out, 2, outpred, data.y)
 
     # saving training-plot
     if loop_run > 1: pass
@@ -131,7 +153,7 @@ for i in range(loop_run):
         name    = f'RESULTS/MODEL-{args.framework}-plot.png'
 
     # saving prediction 
-    print('> Accuracy: {:.3f}%---------MICS: {:.3f}'.format(acc,mics))
+    print('> Accuracy: {:.3f}%---------Memory: {:.3f} gb'.format(acc,mem_size))
     if M_choice != 0:
         # INDIVIDUAL PREDICTION
         for i in range(n_layers):
@@ -140,15 +162,14 @@ for i in range(loop_run):
             temp_acc   = temp_cor / data.test_mask.sum().item()
             print(f'    Filter {i+1:<3} acc: {100*temp_acc:.3f}     V*: {model.leader_info[i]:.2f}')
 
-    all_acc.append(acc)
-    all_MICS.append(mics)
-    all_seeds.append(random_seed)
+    all_ACC.append(acc)
+    all_SEEDS.append(random_seed)
 
     stop_time = time.time()
     the_time  = stop_time-start_training
     all_TIME.append(the_time)
     print('-'*40)
 
-report_df = pd.DataFrame(list(zip(all_seeds,all_acc,all_MICS,all_TIME)),columns=['Seeds','Accuracy','MICS','TIME'])
+report_df = pd.DataFrame(list(zip(all_SEEDS,all_ACC,all_MEMORY,all_TIME)),columns=['Seeds','Accuracy','Memory','Time'])
 print('='*40);print(report_df,'\n')
-print(f'Mean Accucacy: {report_df.Accuracy.mean():.2f} +/- {report_df.Accuracy.std():.2f} ---- Avg. MICS: {report_df.MICS.mean():.3f}')
+print(f'Mean Accucacy: {report_df.Accuracy.mean():.2f} +/- {report_df.Accuracy.std():.2f} ---- Avg. Memory: {report_df.Memory.mean():.3f} gb.')

@@ -1,1 +1,0 @@
-Folder where trained models can be stored.

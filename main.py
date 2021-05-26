@@ -12,7 +12,7 @@ parser.add_argument('--benchmark', default='cora',
                     help='benchmark dataset (default: cora')
 
 # the GNN framework
-parser.add_argument('--framework', default='NSGNN',choices=['NSGNN','GCN','GAT','GRAPHSAGE','MLP','GRAPHConv','DNA'],
+parser.add_argument('--framework', default='NSGNN',choices=['NSGNN','GCN','GAT','GRAPHSAGE','MLP'],
                     help='model choices (default: NSGNN)')
 
 # Learning Hyper-parameters
@@ -26,13 +26,12 @@ parser.add_argument('--neurons',default=64, type=int,
                     help='number of neurons to use for hidden layers of your model. ***not needed for NSGNN')
 parser.add_argument('--heads',  default=8, type=int, help='number of attention-heads to use  for GAT   ***only needed for GAT')
 parser.add_argument('--depth',  default=1, type=int, help='propagation depth of NSGNN filter for NSGNN ***only needed for NODE-SELECT')
-parser.add_argument('--groups', default=1, type=int, help ='groupings of linear projection   for DNA   ***only needed for DNA'  )
 
 # Performance Parameters
 parser.add_argument('--num_splits',default=10, type=int,
                     help='number of different data-splits to use for training and testing model')
 parser.add_argument('--random', default=False, type=bool,  help ='whether to randomize the seeds used for training/testing the model')
-parser.add_argument('--noise',  default=0.1,   type=float, help ='percentage of noise to add to dataset')
+parser.add_argument('--noise',  default=0.0,   type=float, help ='percentage of noise to add to dataset')
 
 
 args = parser.parse_args(sys.argv[1:])

@@ -48,3 +48,14 @@ python main.py --benchmark cora --framework GCN --lr 0.01 --weight_decay 0.0005 
 ```bash
 python main.py --benchmark amazon-p --framework GAT --lr 0.005 --weight_decay 0.00005  --layers 2 --heads 8 --neurons 16
 ```
+
+## Citation
+If you find our codes or project useful for your research, please cite our work:
+```bash
+@article{louis2021node,
+  title={NODE-SELECT: A Graph Neural Network Based On A Selective Propagation Technique},
+  author={Louis, Steph-Yves and Nasiri, Alireza and Rolland, Fatima J and Mitro, Cameron and Hu, Jianjun},
+  journal={arXiv preprint arXiv:2102.08588},
+  year={2021}
+}
+```

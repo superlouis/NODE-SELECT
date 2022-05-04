@@ -1,6 +1,6 @@
 # NODE-SELECT Graph Neural Networks
 
-This software package implements the work done in the paper "NODE-SELECT: A FLEXIBLE GRAPH NEURAL NETWORK BASED ON REALISTIC PROPAGATION SCHEME". This is the official Pytorch repository.  
+This software package implements the work done in the paper "NODE-SELECT: A Graph Neural Network Based On A Selective Propagation Technique". This is the official Pytorch repository.  
 
 ![](front-pic.png)
 <a name="installation"></a>
@@ -52,10 +52,11 @@ python main.py --benchmark amazon-p --framework GAT --lr 0.005 --weight_decay 0.
 ## Citation
 If you find our codes or project useful for your research, please cite our work:
 ```bash
-@article{louis2021node,
-  title={NODE-SELECT: A Graph Neural Network Based On A Selective Propagation Technique},
+@article{louis2022node,
+  title={Node-select: a graph neural network based on a selective propagation technique},
   author={Louis, Steph-Yves and Nasiri, Alireza and Rolland, Fatima J and Mitro, Cameron and Hu, Jianjun},
-  journal={arXiv preprint arXiv:2102.08588},
-  year={2021}
+  journal={Neurocomputing},
+  year={2022},
+  publisher={Elsevier}
 }
 ```
